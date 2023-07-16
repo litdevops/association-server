@@ -830,12 +830,12 @@ router.post("/register/", async (req, res) => {
         user.phone = existing_phone._id;
         await user.save();
 
-        await SendVerificationCode({
-          phone,
-          confirmation_code,
-          user_id: user.id,
-          template: template_confirmation,
-        });
+        // await SendVerificationCode({
+        //   phone,
+        //   confirmation_code,
+        //   user_id: user.id,
+        //   template: template_confirmation,
+        // });
       }
 
       // send token via email or sms
