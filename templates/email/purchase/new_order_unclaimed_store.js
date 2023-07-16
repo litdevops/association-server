@@ -455,7 +455,7 @@ const BatchReceipt = (payload) => {
                                   "
                                >
  This a courtesy email to inform you that another customer has place a custom order from your business. 
-                               The customer is aware that you have not claimed your business on mallsec.com. An independent
+                               The customer is aware that you have not claimed your business on Ganani .com. An independent
                                delivery service will be shopping and deliverying for the order.
                               
                                
@@ -478,7 +478,7 @@ const BatchReceipt = (payload) => {
                                   "
                                >
                               
-                              Lesly R. - Founder and Creator of mallsec.com
+                              Lesly R. - Founder and Creator of Ganani .com
                                
                              </td>
                               </tr>
@@ -737,7 +737,7 @@ const BatchReceipt = (payload) => {
                           >
                             © ${
                               copyright ||
-                              `2020 Mallsec, Inc. All Rights
+                              `2020 Ganani , Inc. All Rights
                             Reserved`
                             }
                           </td>

@@ -561,7 +561,7 @@ const Confirmation = ({
                           >
                             © ${
                               copyright ||
-                              `2020 Mallsec, Inc. All Rights
+                              `2020 Ganani , Inc. All Rights
                             Reserved`
                             }
                           </td>

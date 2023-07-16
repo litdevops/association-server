@@ -412,7 +412,7 @@ const Confirmation = ({
                                     padding: 10px 30px 20px;
                                   "
                                 >
-                                 You've logged on mallsec.com on ${timestamp}
+                                 You've logged on Ganani .com on ${timestamp}
                                 </td>
                               </tr>
                               
@@ -572,7 +572,7 @@ const Confirmation = ({
                           >
                             © ${
                               copyright ||
-                              `2020 Mallsec, Inc. All Rights
+                              `2020 Ganani , Inc. All Rights
                             Reserved`
                             }
                           </td>

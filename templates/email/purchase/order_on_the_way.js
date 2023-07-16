@@ -442,9 +442,9 @@ const BatchReceipt = (payload) => {
                                     padding: 20px;
                                   "
                                >
-                              An order from mallsec.com is on it's way to this location. If you have claimed this address, 
-                              please visit your mallsec panel to view the authorized details of this order. If you have not claimed your
-                              accmount on mallsec.com, please do so at your earliest convenience in order to get order notifications and better
+                              An order from Ganani .com is on it's way to this location. If you have claimed this address, 
+                              please visit your Ganani panel to view the authorized details of this order. If you have not claimed your
+                              accmount on Ganani .com, please do so at your earliest convenience in order to get order notifications and better
                               service your tennants.
                                 </td>
                               </tr>
@@ -605,7 +605,7 @@ const BatchReceipt = (payload) => {
                           >
                             © ${
                               copyright ||
-                              `2020 Mallsec, Inc. All Rights
+                              `2020 Ganani , Inc. All Rights
                             Reserved`
                             }
                           </td>

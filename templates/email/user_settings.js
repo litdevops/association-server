@@ -203,7 +203,7 @@ const Confirmation = ({
                                   message ||
                                   "Use this link to verify your account changes: <a href=" +
                                     link +
-                                    "> mallsec.com </a>"
+                                    "> Ganani .com </a>"
                                 }
                                 </td>
                             </tr>
@@ -245,7 +245,7 @@ const Confirmation = ({
                       </tr>
                       <tr>
                         <td align="center" style="font-weight:400; font-size:12px; color:#959595; font-family:poppins; mso-line-height-rule: exactly; line-height:14px; padding-bottom:10px;">© ${
-                          copyright || "2020 Mallsec, Inc. All Rights Reserved"
+                          copyright || "2020 Ganani , Inc. All Rights Reserved"
                         }</td>
                       </tr>
                       <tr>

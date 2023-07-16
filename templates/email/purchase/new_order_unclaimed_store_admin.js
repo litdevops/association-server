@@ -492,7 +492,7 @@ Thank you and God bless.
                                   "
                                >
                               
-                              Lesly R. - Founder and Creator of mallsec.com
+                              Lesly R. - Founder and Creator of Ganani .com
                                
                              </td>
                               </tr>
@@ -748,7 +748,7 @@ Thank you and God bless.
                           >
                             © ${
                               copyright ||
-                              `2020 Mallsec, Inc. All Rights
+                              `2020 Ganani , Inc. All Rights
                             Reserved`
                             }
                           </td>

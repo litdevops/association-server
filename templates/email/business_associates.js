@@ -203,7 +203,7 @@ const Confirmation = ({
                                   message ||
                                   "Use the link below activate your account with <a href=" +
                                     link +
-                                    "> mallsec.com </a>"
+                                    "> Ganani .com </a>"
                                 }
                                 </td>
                             </tr>

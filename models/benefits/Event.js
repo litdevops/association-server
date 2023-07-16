@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
-const pointSchema = require("./point");
-
+const pointSchema = require("../location/Point");
 const Schema = mongoose.Schema;
 
 const TheSchema = new Schema({

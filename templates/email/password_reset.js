@@ -389,16 +389,16 @@ const Confirmation = ({
   
                               <tr>
                                 <td class="size-20" align="center" style="font-weight:600; font-size:34px; color:#203442; font-family:poppins; mso-line-height-rule: exactly; text-align:center; line-height:34px;">
-                                  ${title || "Reset Mallsec Password"}
+                                  ${title || "Reset Ganani Password"}
                                 </td>
                               </tr>
                               <tr>
                                 <td class="pad-TB-only" align="center" style="font-weight:400; font-size:14px; color:#51636f; font-family:poppins; mso-line-height-rule: exactly; line-height:26px; padding:10px 30px 20px;">
                                   ${
                                     message ||
-                                    "Use this link to reset your password with mallsec: <a href=" +
+                                    "Use this link to reset your password with Ganani : <a href=" +
                                       link +
-                                      "> mallsec.com </a>. Please disregard this message if you did not make this request."
+                                      "> Ganani .com </a>. Please disregard this message if you did not make this request."
                                   }
                                   </td>
                               </tr>
@@ -572,7 +572,7 @@ const Confirmation = ({
                             >
                               © ${
                                 copyright ||
-                                `2020 Mallsec, Inc. All Rights
+                                `2020 Ganani , Inc. All Rights
                               Reserved`
                               }
                             </td>
