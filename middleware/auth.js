@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const Profile = require("../models/auth/Profile");
 const User = require("../models/auth/User");
+const BusinessProfile = require("../models/business/BusinessProfile");
 const Manager = require("../models/business/manager");
 const { getBody } = require("../utils/api");
 
@@ -26,21 +27,26 @@ module.exports = async (req, res, next = (f) => f) => {
         req.user = decoded.user;
 
         let user = await User.findOne({ _id: decoded.user && decoded.user.id });
-        let found_manager = await Manager.findOne({
-          user: user && user._id,
-          owned: true,
-        });
+        // get current profile
+        let profile = await Profile.findOne({ user: user._id });
+        // check for users current place.
+        if (profile.current_place) {
+          let found_manager = await Manager.findOne({
+            user: user && user._id,
+            place: profile.current_place,
+            access_type: { $in: ["own", "manage"] },
+          });
 
-        if (found_manager) {
-          let current_place = await Place.findOne({
-            _id: found_manager.place,
-          }).populate(["poster", "banner", "logo"]);
-          console.log("verification 13");
+          if (found_manager) {
+            let current_place = await BusinessProfile.findOne({
+              place: found_manager.place,
+            }).populate(["poster", "banner", "logo"]);
 
-          current_place = await getBody("current_place", current_place);
+            current_place = await getBody("current_place", current_place);
 
-          if (current_place) {
-            req.current_place = current_place;
+            if (current_place) {
+              req.current_place = current_place;
+            }
           }
         }
         if (decoded.forgot_password) {

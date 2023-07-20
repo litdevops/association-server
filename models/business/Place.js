@@ -32,15 +32,6 @@ const PlaceSchema = new mongoose.Schema({
     ref: "Profile",
   },
 
-  // branding
-  logo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "File",
-  },
-  banner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "File",
-  },
   GeolocationPositionError: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "File",

@@ -11,6 +11,10 @@ const {
 } = require("../../middleware/message");
 const { fixRequestBody } = require("http-proxy-middleware");
 const { getPlaceApi } = require("../../public_api/place");
+const BusinessProfile = require("../../models/business/BusinessProfile");
+const Profile = require("../../models/auth/Profile");
+const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
 
 // Google Auth
 const router = express.Router();
@@ -21,10 +25,6 @@ router.get("/place/isonboard", [auth], async (req, res) => {
     let publish_later = req.current_place && req.current_place.publish_later;
 
     let output = !publish_later && !published;
-
-    console.log(published);
-
-    console.log(output);
 
     res.status(201).json(output);
   } catch (error) {
@@ -200,52 +200,109 @@ router.post("/place/my_business", [auth], async (req, res) => {
     const BODY = req.body;
     const user_id = req.user && req.user.id;
     let error_list = [];
-    if (!user_id) {
+    const found_profile = await Profile.findOne({ user: user_id });
+
+    if (!user_id || !found_profile) {
       error_list = [{ message: "Invalid Credentials" }];
       throw {
         status: 403,
         message: { errors: error_list },
       };
     }
+
     let got_body = (await getBody(api_key, BODY)) || {};
     let place = got_body.my_business && got_body.my_business[0];
-    console.log(got_body, "testing_place");
 
     if (place) {
-      // check if the user already managed a place
+      // check if user is a manager
       let found_manager = await Manager.findOne({
         user: user_id,
-        owned: true,
-      }).populate("place");
-
-      const found_place = await Place.find({ _id: place });
-
-      const body = {
         place,
-        user: user_id,
-        place_id: found_place._id,
-        owned: true,
-        place_confirmed: false,
-        user_confirmed: true,
-        confirmation_code,
-      };
+        access_type: { $in: ["own", "manager"] },
+      });
 
-      if (found_manager && found_manager.place) {
-        if (found_manager.place._id == place) {
-          found_manager.place_changing = place;
-          await found_manager.save();
+      // check if place is claimed
+      let found_place = await Place.findOne({ _id: place });
+
+      if (!found_place || (found_place.claimed && !found_manager)) {
+        throw { message: "You are not Authorized" };
+      }
+
+      // if theirs a current place and
+      // user have not solidified their management position.
+      // include the current business information to the new business informaiton.
+      let found_current_place;
+      if (req.current_place) {
+        found_current_place = await BusinessProfile.findOne({
+          _id: req.current_place._id,
+        });
+      }
+
+      let new_business_profile;
+      // check if user is a manager
+
+      let found_current_place_id = String(found_current_place._doc.place);
+      let found_manager_place_id = String(found_manager.place);
+      console.log(
+        found_current_place_id,
+        found_manager_place_id,
+        found_current_place_id == found_manager_place_id,
+        "new_business_profile 1"
+      );
+      if (
+        found_manager &&
+        found_manager.place ==
+          (found_manager_place_id && found_current_place_id)
+      ) {
+        // check if the manager is managingin the current business profile.
+        // this will indicate that it is the user is already managing that business and if so,
+        // we don't need to create a nother business profile.
+
+        new_business_profile = found_current_place;
+      } else {
+        let business_place_body = {
+          place,
+          owner: req.user._id,
+          profile: req.user.profile,
+        };
+
+        if (found_current_place) {
+          business_place_body = {
+            ...found_current_place,
+          };
         }
-      }
-      if (!found_manager) {
-        found_manager = new Manager(body);
-        await found_manager.save();
-      } else if (!found_manager.confirmed) {
-        found_manager.confirmation_code = confirmation_code;
+        business_place_body = {
+          ...found_place,
+          ...business_place_body,
+        };
+
+        new_business_profile = new BusinessProfile(business_place_body);
+        await new_business_profile.save();
+
+        // add place to profile current_place
+        found_profile.current_place = place;
+        await found_profile.save();
+
+        // create manager body
+        let manager_body = {
+          place,
+          user: user_id,
+          profile: req.user.profile,
+          business_profile: new_business_profile._id,
+          place: found_place._id,
+          place_id: found_place._id,
+          owned: true,
+          place_confirmed: false,
+          user_confirmed: true,
+          confirmation_code,
+          access_type: ["own"],
+        };
+        found_manager = new Manager(manager_body);
         await found_manager.save();
       }
 
-      let output = await getPlaceApi({
-        _id: found_manager.place_changing || found_manager.place._id,
+      output = await getPlaceApi({
+        business_profile: new_business_profile,
       });
 
       res.status(201).json(output);

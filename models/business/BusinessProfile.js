@@ -8,7 +8,28 @@ const TheSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Place",
   },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
+  profile: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Profile",
+  },
 
+  // branding
+  logo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "File",
+  },
+  banner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "File",
+  },
+  poster: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "File",
+  },
   // data
   title: String,
   motto: String,

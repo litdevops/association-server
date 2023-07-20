@@ -12,6 +12,10 @@ const TheSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "profile",
   },
+  business_profile: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "BusinessProfile",
+  },
   // information
   title: String,
   category: String,
