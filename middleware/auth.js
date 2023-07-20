@@ -39,8 +39,9 @@ module.exports = async (req, res, next = (f) => f) => {
 
           if (found_manager) {
             let current_place = await BusinessProfile.findOne({
-              place: found_manager.place,
+              _id: found_manager.business_profile,
             }).populate(["poster", "banner", "logo"]);
+            console.log(current_place, "testing_auth_profile");
 
             current_place = await getBody("current_place", current_place);
 
@@ -55,6 +56,7 @@ module.exports = async (req, res, next = (f) => f) => {
 
         next();
       } catch (err) {
+        console.log(err, "auth_err");
         res.status(500).json({
           status: 400,
           errors: [{ msg: err.message || "Token is not valid" }],

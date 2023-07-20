@@ -56,7 +56,6 @@ router.get("/place/my_api", [auth], async (req, res) => {
 router.post("/place/publish_place", [auth], async (req, res) => {
   try {
     const { published, publish_later } = req.body;
-    console.log(published, "testing error");
 
     let found_place = await Place.findOne({ _id: req.current_place._id });
     found_place.published = published;
@@ -132,8 +131,6 @@ router.post("/place/business_members", [auth], async (req, res) => {
     });
 
     const complete_connections = await Promise.all(connections);
-
-    console.log(complete_connections, "complete_connections");
 
     let output = await getPlaceApi({ _id: current_place._id });
 
@@ -241,14 +238,16 @@ router.post("/place/my_business", [auth], async (req, res) => {
       let new_business_profile;
       // check if user is a manager
 
-      let found_current_place_id = String(found_current_place._doc.place);
-      let found_manager_place_id = String(found_manager.place);
-      console.log(
-        found_current_place_id,
-        found_manager_place_id,
-        found_current_place_id == found_manager_place_id,
-        "new_business_profile 1"
-      );
+      let found_current_place_id;
+      let found_manager_place_id;
+
+      if (found_current_place) {
+        found_current_place_id = String(found_current_place._doc.place);
+      }
+      if (found_manager) {
+        found_manager_place_id = String(found_manager.place);
+      }
+
       if (
         found_manager &&
         found_manager.place ==
@@ -262,20 +261,23 @@ router.post("/place/my_business", [auth], async (req, res) => {
       } else {
         let business_place_body = {
           place,
-          owner: req.user._id,
-          profile: req.user.profile,
+          owner: req.user.id,
+          profile: found_profile._id,
         };
+
+        console.log(req.user, "testing_user");
 
         if (found_current_place) {
           business_place_body = {
-            ...found_current_place,
+            ...found_current_place.doc,
           };
         }
         business_place_body = {
-          ...found_place,
+          ...found_place._doc,
           ...business_place_body,
         };
 
+        console.log(business_place_body, "business_place_body");
         new_business_profile = new BusinessProfile(business_place_body);
         await new_business_profile.save();
 
@@ -287,7 +289,7 @@ router.post("/place/my_business", [auth], async (req, res) => {
         let manager_body = {
           place,
           user: user_id,
-          profile: req.user.profile,
+          profile: found_profile._id,
           business_profile: new_business_profile._id,
           place: found_place._id,
           place_id: found_place._id,
@@ -313,6 +315,7 @@ router.post("/place/my_business", [auth], async (req, res) => {
       };
     }
   } catch (error) {
+    console.log(error, "testing_error_here");
     res.status(error.status || 400).json({ message: error.message });
   }
 });
@@ -334,40 +337,37 @@ router.post("/place/business_profile", [auth], async (req, res) => {
     let got_body = (await getBody(api_key, BODY)) || {};
 
     // check if business exists
-    let found_manager = await Manager.findOne({
-      user: user_id,
-      owned: true,
-    });
 
-    let found_place = await Place.findOne({
-      _id: found_manager.place,
+    let found_place = await BusinessProfile.findOne({
+      _id: req.current_place && req.current_place._id,
     }).populate([
       { path: "logo", select: { link: 1, name: 1 } },
       { path: "poster", select: { link: 1, name: 1 } },
       { path: "banner", select: { link: 1, name: 1 } },
     ]);
-
     const got_keys = Object.keys(got_body);
+    console.log(found_place, got_body, req.current_place, "testing_got_keys");
 
     got_keys.forEach((key) => {
-      found_place[key] = got_body[key];
+      let value = got_body[key];
+      if (value) {
+        found_place[key] = value;
+      }
     });
     found_place.corrected = true;
     await found_place.save();
+
     // todo: make sure user is adding and editing the correct place
     let place_card = await getBody("place_card", found_place);
     let business_hours = await Hour.find({ place: place_card._id }).sort({
       created_at: -1,
     });
-    let onboard_business_hours = await getBody(
-      "public_business_hours",
-      business_hours
-    );
 
-    let output = await getPlaceApi({ _id: found_place._id });
+    let output = await getPlaceApi({ business_profile: found_place });
 
     res.status(206).json(output);
   } catch (error) {
+    console.log(error, "testing_error");
     res.status(error.status || 400).json({ message: error.message });
   }
 });

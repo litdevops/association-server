@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const pointSchema = require("../utils/Point");
 
 const Schema = mongoose.Schema;
 
@@ -69,6 +70,17 @@ const TheSchema = new Schema({
   updated_at: {
     type: Date,
   },
+
+  point: { type: pointSchema },
+  // from body
+  name: String,
+  place_id: String,
+  business_status: String,
+  formatted_address: String,
+  international_phone_number: String,
+  icon: String,
+  types: [String],
+  website: String,
 });
 
 module.exports = mongoose.model("BusinessProfile", TheSchema);
