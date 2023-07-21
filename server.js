@@ -61,9 +61,7 @@ async function run(pid) {
     await new Promise((resolve) => httpServer.listen({ port: PORT }, resolve));
     console.log(`🚀 Server ready at http://localhost:${PORT}`, pid);
     return { app };
-  } catch (error) {
-    console.log(error, "association_error");
-  }
+  } catch (error) {}
 }
 
 exports.run = run;

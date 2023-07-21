@@ -41,7 +41,6 @@ module.exports = async (req, res, next = (f) => f) => {
             let current_place = await BusinessProfile.findOne({
               _id: found_manager.business_profile,
             }).populate(["poster", "banner", "logo"]);
-            console.log(current_place, "testing_auth_profile");
 
             current_place = await getBody("current_place", current_place);
 

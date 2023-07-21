@@ -177,7 +177,7 @@ router.post("/place/business_branding", [auth], async (req, res) => {
       await current_place.save();
       let output = await getPlaceApi({ _id: current_place._id });
 
-      res.status(206).json(output);
+      res.status(206).json("output");
     } else {
       throw {
         status: 500,
@@ -276,6 +276,7 @@ router.post("/place/my_business", [auth], async (req, res) => {
           ...found_place._doc,
           ...business_place_body,
         };
+        delete business_place_body._id;
 
         console.log(business_place_body, "business_place_body");
         new_business_profile = new BusinessProfile(business_place_body);
@@ -346,7 +347,6 @@ router.post("/place/business_profile", [auth], async (req, res) => {
       { path: "banner", select: { link: 1, name: 1 } },
     ]);
     const got_keys = Object.keys(got_body);
-    console.log(found_place, got_body, req.current_place, "testing_got_keys");
 
     got_keys.forEach((key) => {
       let value = got_body[key];
@@ -363,7 +363,8 @@ router.post("/place/business_profile", [auth], async (req, res) => {
       created_at: -1,
     });
 
-    let output = await getPlaceApi({ business_profile: found_place });
+    let output = await getPlaceApi({ _id: found_place._doc });
+    console.log(output, "info");
 
     res.status(206).json(output);
   } catch (error) {
@@ -390,7 +391,7 @@ router.post("/place/business_hours", [auth], async (req, res) => {
 
     let output = await getPlaceApi({ _id: current_place._id });
 
-    res.status(206).json(output);
+    res.status(206).json("output");
   } catch (error) {
     res.status(error.status || 400).json({ message: error.message });
   }
