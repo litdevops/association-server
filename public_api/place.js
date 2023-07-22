@@ -29,7 +29,20 @@ const getPlaceApi = async (obj) => {
       { path: "public_files", select: "link" },
       { path: "private_files", select: "link" },
     ];
-    let business_members_populate = [];
+    let business_members_populate = [
+      { path: "receiver.place", select: getDict("public_place") },
+      {
+        path: "receiver.business_profile",
+        select: getDict("public_business_profile"),
+        populate: getDict("business_branding"),
+      },
+      { path: "sender.place", select: getDict("public_place") },
+      {
+        path: "sender.business_profile",
+        select: getDict("public_business_profile"),
+        populate: getDict("business_branding"),
+      },
+    ];
 
     let manager_populate = [
       {
@@ -81,6 +94,8 @@ const getPlaceApi = async (obj) => {
       $or: [
         { "sender.business_profile": found_business_profile._id },
         { "receiver.business_profile": found_business_profile._id },
+        { "receiver.place": found_business_profile.place },
+        { "sender.place": found_business_profile.place },
       ],
     }).populate(business_members_populate);
 

@@ -28,8 +28,19 @@ module.exports = async (req, res, next = (f) => f) => {
 
         let user = await User.findOne({ _id: decoded.user && decoded.user.id });
         // get current profile
-        let profile = await Profile.findOne({ user: user._id });
+        let profile = await Profile.findOne({ user: user._id, current: true });
         // check for users current place.
+        if (profile) {
+          profile = await Profile.findOne({ user: user._id });
+          if (!profile) {
+            return res
+              .status(401)
+              .json({ msg: "No token, authorization denied" });
+          }
+          profile.current = true;
+        }
+        req.current_profile = profile;
+
         if (profile.current_place) {
           let found_manager = await Manager.findOne({
             user: user && user._id,

@@ -14,8 +14,9 @@ const { getPlaceApi } = require("../../public_api/place");
 const BusinessProfile = require("../../models/business/BusinessProfile");
 const Profile = require("../../models/auth/Profile");
 const mongoose = require("mongoose");
+const Contact = require("../../models/auth/Contact");
 const ObjectId = mongoose.Types.ObjectId;
-
+const createProfile = require("../../utils/profile");
 // Google Auth
 const router = express.Router();
 
@@ -72,10 +73,66 @@ router.post("/place/publish_place", [auth], async (req, res) => {
 
 router.post("/place/business_members", [auth], async (req, res) => {
   try {
-    const { body, current_place, user } = req;
+    const { body, current_profile, user, current_place } = req;
 
     if (!body || !body.place) {
       throw { message: "Your must add a business member" };
+    }
+
+    const profile_body = {
+      email: body.contact_email,
+      name: body.contact_name,
+      phone: body.contact_phone_number,
+      current: true,
+    };
+
+    const contact_profile = await createProfile(profile_body);
+
+    let found_contact;
+
+    if (profile_contact.user) {
+      found_contact = await Contact.findOne({
+        $and: [
+          {
+            $or: [
+              {
+                $and: [
+                  { "receiver.profile": current_profile._id },
+                  { "sender.profile": contact_profile._id },
+                ],
+              },
+              {
+                $and: [
+                  { "sender.profile": current_profile._id },
+                  { "receiver.profile": contact_profile._id },
+                ],
+              },
+            ],
+          },
+          {
+            $or: [
+              { place: current_place.place },
+              { business_profile: current_place._id },
+            ],
+          },
+        ],
+      });
+
+      if (!found_contact) {
+        const contact_body = {
+          sender: {
+            profile: current_profile._id,
+            seen: new Date.now(),
+          },
+          receiver: {
+            profile: contact_profile._id,
+          },
+          place: current_place.place,
+          business_profile: current_place._id,
+        };
+        found_contact = new Contact(contact_body);
+        await found_contact.save();
+      }
     }
 
     // associate place with users
@@ -83,16 +140,25 @@ router.post("/place/business_members", [auth], async (req, res) => {
     let connections = await body.place.map(async (receiver) => {
       let connection = await Connection.findOne({
         $or: [
-          { "receiver.place": receiver, "sender.place": current_place._id },
-          { "sender.place": receiver, "receiver.place": current_place._id },
+          {
+            "receiver.business_profile": receiver,
+            "sender.business_profile": current_place._id,
+          },
+          {
+            "sender.business_profile": receiver,
+            "receiver.business_profile": current_place._id,
+          },
         ],
       });
 
       if (!connection) {
         let connection_body = {
           user: user.id,
+          profile: current_profile._id,
+          contact: found_contact._id,
           sender: {
-            place: current_place._id,
+            business_profile: current_place._id,
+            place: current_place.place,
             status: "accepted",
           },
           receiver: {
@@ -113,29 +179,36 @@ router.post("/place/business_members", [auth], async (req, res) => {
           if (!nogo) {
             // this means that they already received a message from the seller
             // and we can recoonect
-            delete connection.receiver.seen;
-            await connection.save();
+            connection.receiver.seen = null;
           }
         } else if (connection.sender.place === receiver) {
           if (!nogo) {
             // this means that they already received a message from the seller
             // and we can recoonect
-            delete connection.sender.seen;
-            await connection.save();
+            delete connection.sender.null;
             connection.receiver.status = "accepted";
           }
         }
       }
+      await connection.save();
+
+      // connect to contact
+      const contact_body = {};
+
+      console.log(connection, "testing_connection");
 
       return connection;
     });
 
     const complete_connections = await Promise.all(connections);
 
+    console.log(complete_connections);
+
     let output = await getPlaceApi({ _id: current_place._id });
 
     res.status(201).json(output);
   } catch (error) {
+    console.log(error, "testing_error");
     res.status(error.status || 403).json({ message: error.messsage });
   }
 });
