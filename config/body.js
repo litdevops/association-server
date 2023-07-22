@@ -1,4 +1,6 @@
 const dict = {
+  public_profile: ["name", "email", "phone"],
+  update_manager: ["access_type", "job_positions", "internal_user_id"],
   public_manager: [
     "place",
     "positions",

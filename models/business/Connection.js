@@ -51,6 +51,10 @@ const TheSchema = new Schema({
       type: Boolean,
       default: true,
     },
+    message: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Message",
+    },
   },
 
   published: {

@@ -39,13 +39,13 @@ router.get("/place/my_api", [auth], async (req, res) => {
 
     let found_manager = await Manager.findOne({
       user: user_id,
-      owned: true,
-      place: place_id,
+      access_type: { $in: ["own", "manage"] },
+      business_profile: place_id,
     });
 
     let output = {};
     if (found_manager) {
-      output = await getPlaceApi({ _id: found_manager.place });
+      output = await getPlaceApi({ _id: found_manager.business_profile });
     }
     res.status(201).json(output);
   } catch (error) {
@@ -146,38 +146,42 @@ router.post("/place/business_branding", [auth], async (req, res) => {
     const { body: BODY } = req;
     let { logo, banner, poster } = (await getBody(api_key, BODY)) || {};
 
-    let current_place = await Place.findOne({ _id: req.current_place._id });
+    let current_place = await BusinessProfile.findOne({
+      _id: req.current_place._id,
+    });
     if (current_place) {
       if (logo) {
         current_place.logo = logo;
         let found = await File.findOne({ _id: logo });
         found.user = req.user.id;
-        found.place = req.current_place._id;
+        found.business_profile = req.current_place._id;
         await found.save();
       }
       if (banner) {
         current_place.banner = banner;
         let found = await File.findOne({ _id: banner });
         found.user = req.user.id;
-        found.place = req.current_place._id;
+        found.business_profile = req.current_place._id;
         await found.save();
       } else {
-        delete current_place.banner;
+        // delete current_place.banner;
       }
 
       if (poster) {
         current_place.poster = poster;
         let found = await File.findOne({ _id: poster });
         found.user = req.user.id;
-        found.place = req.current_place._id;
+        found.business_profile = req.current_place._id;
         await found.save();
       } else {
-        delete current_place.poster;
+        // delete current_place.poster;
       }
       await current_place.save();
-      let output = await getPlaceApi({ _id: current_place._id });
 
-      res.status(206).json("output");
+      let output = await getPlaceApi({ _id: current_place._id });
+      console.log(output, "current_place");
+
+      res.status(206).json(output);
     } else {
       throw {
         status: 500,
@@ -215,7 +219,7 @@ router.post("/place/my_business", [auth], async (req, res) => {
       let found_manager = await Manager.findOne({
         user: user_id,
         place,
-        access_type: { $in: ["own", "manager"] },
+        access_type: { $in: ["own", "manage"] },
       });
 
       // check if place is claimed
@@ -382,7 +386,8 @@ router.post("/place/business_hours", [auth], async (req, res) => {
 
     let payload = {
       ...got_body,
-      place: current_place._id,
+      place: current_place.place,
+      business_profile: current_place._id,
       user: req.user.id,
     };
 
@@ -391,7 +396,7 @@ router.post("/place/business_hours", [auth], async (req, res) => {
 
     let output = await getPlaceApi({ _id: current_place._id });
 
-    res.status(206).json("output");
+    res.status(206).json(output);
   } catch (error) {
     res.status(error.status || 400).json({ message: error.message });
   }

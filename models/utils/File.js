@@ -16,6 +16,10 @@ const TheSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Place",
   },
+  business_profile: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "BusinessProfile",
+  },
   access: [
     {
       type: mongoose.Schema.Types.ObjectId,

@@ -8,6 +8,7 @@ const Job = require("../models/business/Job");
 const Manager = require("../models/business/manager");
 const Connection = require("../models/business/Connection");
 const BusinessProfile = require("../models/business/BusinessProfile");
+const { getDict } = require("../config/body");
 
 const getPlaceApi = async (obj) => {
   let output = {};
@@ -30,7 +31,12 @@ const getPlaceApi = async (obj) => {
     ];
     let business_members_populate = [];
 
-    let manager_populate = [];
+    let manager_populate = [
+      {
+        path: "profile",
+        select: getDict("public_profile"),
+      },
+    ];
 
     let hours_query = {};
     if (_id) {

@@ -20,6 +20,7 @@ const {
   emailTransporter,
 } = require("../../middleware/message");
 const Manager = require("../../models/business/manager");
+const BusinessProfile = require("../../models/business/BusinessProfile");
 
 // Google Auth
 const router = express.Router();
@@ -173,13 +174,14 @@ router.get(`/load_user/`, [auth], async (req, res) => {
       let found_manager = await Manager.findOne({
         user: req.user.id,
         owned: true,
+        place: found_profile.current_place,
       });
 
       let current_place;
 
       if (found_manager) {
-        current_place = await Place.findOne({
-          _id: found_manager.place,
+        current_place = await BusinessProfile.findOne({
+          _id: found_manager.business_profile,
         }).populate([
           { path: "logo", select: "link" },
           { path: "poster", select: "link" },

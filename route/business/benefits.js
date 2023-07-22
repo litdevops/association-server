@@ -18,7 +18,8 @@ router.post("/benefits/:model", [auth], async (req, res) => {
 
     let payload = {
       ...got_body,
-      place: current_place._id,
+      place: current_place.place,
+      business_profile: current_place._id,
       user: req.user.id,
     };
 
