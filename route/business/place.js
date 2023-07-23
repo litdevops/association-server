@@ -11,7 +11,12 @@ const {
 } = require("../../middleware/message");
 const { fixRequestBody } = require("http-proxy-middleware");
 const { getPlaceApi } = require("../../public_api/place");
-
+const BusinessProfile = require("../../models/business/BusinessProfile");
+const Profile = require("../../models/auth/Profile");
+const mongoose = require("mongoose");
+const Contact = require("../../models/auth/Contact");
+const ObjectId = mongoose.Types.ObjectId;
+const createProfile = require("../../utils/profile");
 // Google Auth
 const router = express.Router();
 
@@ -21,10 +26,6 @@ router.get("/place/isonboard", [auth], async (req, res) => {
     let publish_later = req.current_place && req.current_place.publish_later;
 
     let output = !publish_later && !published;
-
-    console.log(published);
-
-    console.log(output);
 
     res.status(201).json(output);
   } catch (error) {
@@ -39,13 +40,13 @@ router.get("/place/my_api", [auth], async (req, res) => {
 
     let found_manager = await Manager.findOne({
       user: user_id,
-      owned: true,
-      place: place_id,
+      access_type: { $in: ["own", "manage"] },
+      business_profile: place_id,
     });
 
     let output = {};
     if (found_manager) {
-      output = await getPlaceApi({ _id: found_manager.place });
+      output = await getPlaceApi({ _id: found_manager.business_profile });
     }
     res.status(201).json(output);
   } catch (error) {
@@ -56,7 +57,6 @@ router.get("/place/my_api", [auth], async (req, res) => {
 router.post("/place/publish_place", [auth], async (req, res) => {
   try {
     const { published, publish_later } = req.body;
-    console.log(published, "testing error");
 
     let found_place = await Place.findOne({ _id: req.current_place._id });
     found_place.published = published;
@@ -73,10 +73,66 @@ router.post("/place/publish_place", [auth], async (req, res) => {
 
 router.post("/place/business_members", [auth], async (req, res) => {
   try {
-    const { body, current_place, user } = req;
+    const { body, current_profile, user, current_place } = req;
 
     if (!body || !body.place) {
       throw { message: "Your must add a business member" };
+    }
+
+    const profile_body = {
+      email: body.contact_email,
+      name: body.contact_name,
+      phone: body.contact_phone_number,
+      current: true,
+    };
+
+    const contact_profile = await createProfile(profile_body);
+
+    let found_contact;
+
+    if (profile_contact.user) {
+      found_contact = await Contact.findOne({
+        $and: [
+          {
+            $or: [
+              {
+                $and: [
+                  { "receiver.profile": current_profile._id },
+                  { "sender.profile": contact_profile._id },
+                ],
+              },
+              {
+                $and: [
+                  { "sender.profile": current_profile._id },
+                  { "receiver.profile": contact_profile._id },
+                ],
+              },
+            ],
+          },
+          {
+            $or: [
+              { place: current_place.place },
+              { business_profile: current_place._id },
+            ],
+          },
+        ],
+      });
+
+      if (!found_contact) {
+        const contact_body = {
+          sender: {
+            profile: current_profile._id,
+            seen: new Date.now(),
+          },
+          receiver: {
+            profile: contact_profile._id,
+          },
+          place: current_place.place,
+          business_profile: current_place._id,
+        };
+        found_contact = new Contact(contact_body);
+        await found_contact.save();
+      }
     }
 
     // associate place with users
@@ -84,16 +140,25 @@ router.post("/place/business_members", [auth], async (req, res) => {
     let connections = await body.place.map(async (receiver) => {
       let connection = await Connection.findOne({
         $or: [
-          { "receiver.place": receiver, "sender.place": current_place._id },
-          { "sender.place": receiver, "receiver.place": current_place._id },
+          {
+            "receiver.business_profile": receiver,
+            "sender.business_profile": current_place._id,
+          },
+          {
+            "sender.business_profile": receiver,
+            "receiver.business_profile": current_place._id,
+          },
         ],
       });
 
       if (!connection) {
         let connection_body = {
           user: user.id,
+          profile: current_profile._id,
+          contact: found_contact._id,
           sender: {
-            place: current_place._id,
+            business_profile: current_place._id,
+            place: current_place.place,
             status: "accepted",
           },
           receiver: {
@@ -114,31 +179,36 @@ router.post("/place/business_members", [auth], async (req, res) => {
           if (!nogo) {
             // this means that they already received a message from the seller
             // and we can recoonect
-            delete connection.receiver.seen;
-            await connection.save();
+            connection.receiver.seen = null;
           }
         } else if (connection.sender.place === receiver) {
           if (!nogo) {
             // this means that they already received a message from the seller
             // and we can recoonect
-            delete connection.sender.seen;
-            await connection.save();
+            delete connection.sender.null;
             connection.receiver.status = "accepted";
           }
         }
       }
+      await connection.save();
+
+      // connect to contact
+      const contact_body = {};
+
+      console.log(connection, "testing_connection");
 
       return connection;
     });
 
     const complete_connections = await Promise.all(connections);
 
-    console.log(complete_connections, "complete_connections");
+    console.log(complete_connections);
 
     let output = await getPlaceApi({ _id: current_place._id });
 
     res.status(201).json(output);
   } catch (error) {
+    console.log(error, "testing_error");
     res.status(error.status || 403).json({ message: error.messsage });
   }
 });
@@ -149,36 +219,40 @@ router.post("/place/business_branding", [auth], async (req, res) => {
     const { body: BODY } = req;
     let { logo, banner, poster } = (await getBody(api_key, BODY)) || {};
 
-    let current_place = await Place.findOne({ _id: req.current_place._id });
+    let current_place = await BusinessProfile.findOne({
+      _id: req.current_place._id,
+    });
     if (current_place) {
       if (logo) {
         current_place.logo = logo;
         let found = await File.findOne({ _id: logo });
         found.user = req.user.id;
-        found.place = req.current_place._id;
+        found.business_profile = req.current_place._id;
         await found.save();
       }
       if (banner) {
         current_place.banner = banner;
         let found = await File.findOne({ _id: banner });
         found.user = req.user.id;
-        found.place = req.current_place._id;
+        found.business_profile = req.current_place._id;
         await found.save();
       } else {
-        delete current_place.banner;
+        // delete current_place.banner;
       }
 
       if (poster) {
         current_place.poster = poster;
         let found = await File.findOne({ _id: poster });
         found.user = req.user.id;
-        found.place = req.current_place._id;
+        found.business_profile = req.current_place._id;
         await found.save();
       } else {
-        delete current_place.poster;
+        // delete current_place.poster;
       }
       await current_place.save();
+
       let output = await getPlaceApi({ _id: current_place._id });
+      console.log(output, "current_place");
 
       res.status(206).json(output);
     } else {
@@ -200,52 +274,115 @@ router.post("/place/my_business", [auth], async (req, res) => {
     const BODY = req.body;
     const user_id = req.user && req.user.id;
     let error_list = [];
-    if (!user_id) {
+    const found_profile = await Profile.findOne({ user: user_id });
+
+    if (!user_id || !found_profile) {
       error_list = [{ message: "Invalid Credentials" }];
       throw {
         status: 403,
         message: { errors: error_list },
       };
     }
+
     let got_body = (await getBody(api_key, BODY)) || {};
     let place = got_body.my_business && got_body.my_business[0];
-    console.log(got_body, "testing_place");
 
     if (place) {
-      // check if the user already managed a place
+      // check if user is a manager
       let found_manager = await Manager.findOne({
         user: user_id,
-        owned: true,
-      }).populate("place");
-
-      const found_place = await Place.find({ _id: place });
-
-      const body = {
         place,
-        user: user_id,
-        place_id: found_place._id,
-        owned: true,
-        place_confirmed: false,
-        user_confirmed: true,
-        confirmation_code,
-      };
+        access_type: { $in: ["own", "manage"] },
+      });
 
-      if (found_manager && found_manager.place) {
-        if (found_manager.place._id == place) {
-          found_manager.place_changing = place;
-          await found_manager.save();
+      // check if place is claimed
+      let found_place = await Place.findOne({ _id: place });
+
+      if (!found_place || (found_place.claimed && !found_manager)) {
+        throw { message: "You are not Authorized" };
+      }
+
+      // if theirs a current place and
+      // user have not solidified their management position.
+      // include the current business information to the new business informaiton.
+      let found_current_place;
+      if (req.current_place) {
+        found_current_place = await BusinessProfile.findOne({
+          _id: req.current_place._id,
+        });
+      }
+
+      let new_business_profile;
+      // check if user is a manager
+
+      let found_current_place_id;
+      let found_manager_place_id;
+
+      if (found_current_place) {
+        found_current_place_id = String(found_current_place._doc.place);
+      }
+      if (found_manager) {
+        found_manager_place_id = String(found_manager.place);
+      }
+
+      if (
+        found_manager &&
+        found_manager.place ==
+          (found_manager_place_id && found_current_place_id)
+      ) {
+        // check if the manager is managingin the current business profile.
+        // this will indicate that it is the user is already managing that business and if so,
+        // we don't need to create a nother business profile.
+
+        new_business_profile = found_current_place;
+      } else {
+        let business_place_body = {
+          place,
+          owner: req.user.id,
+          profile: found_profile._id,
+        };
+
+        console.log(req.user, "testing_user");
+
+        if (found_current_place) {
+          business_place_body = {
+            ...found_current_place.doc,
+          };
         }
-      }
-      if (!found_manager) {
-        found_manager = new Manager(body);
-        await found_manager.save();
-      } else if (!found_manager.confirmed) {
-        found_manager.confirmation_code = confirmation_code;
+        business_place_body = {
+          ...found_place._doc,
+          ...business_place_body,
+        };
+        delete business_place_body._id;
+
+        console.log(business_place_body, "business_place_body");
+        new_business_profile = new BusinessProfile(business_place_body);
+        await new_business_profile.save();
+
+        // add place to profile current_place
+        found_profile.current_place = place;
+        await found_profile.save();
+
+        // create manager body
+        let manager_body = {
+          place,
+          user: user_id,
+          profile: found_profile._id,
+          business_profile: new_business_profile._id,
+          place: found_place._id,
+          place_id: found_place._id,
+          owned: true,
+          place_confirmed: false,
+          user_confirmed: true,
+          confirmation_code,
+          access_type: ["own"],
+        };
+        found_manager = new Manager(manager_body);
         await found_manager.save();
       }
 
-      let output = await getPlaceApi({
-        _id: found_manager.place_changing || found_manager.place._id,
+      output = await getPlaceApi({
+        business_profile: new_business_profile,
       });
 
       res.status(201).json(output);
@@ -256,6 +393,7 @@ router.post("/place/my_business", [auth], async (req, res) => {
       };
     }
   } catch (error) {
+    console.log(error, "testing_error_here");
     res.status(error.status || 400).json({ message: error.message });
   }
 });
@@ -277,40 +415,37 @@ router.post("/place/business_profile", [auth], async (req, res) => {
     let got_body = (await getBody(api_key, BODY)) || {};
 
     // check if business exists
-    let found_manager = await Manager.findOne({
-      user: user_id,
-      owned: true,
-    });
 
-    let found_place = await Place.findOne({
-      _id: found_manager.place,
+    let found_place = await BusinessProfile.findOne({
+      _id: req.current_place && req.current_place._id,
     }).populate([
       { path: "logo", select: { link: 1, name: 1 } },
       { path: "poster", select: { link: 1, name: 1 } },
       { path: "banner", select: { link: 1, name: 1 } },
     ]);
-
     const got_keys = Object.keys(got_body);
 
     got_keys.forEach((key) => {
-      found_place[key] = got_body[key];
+      let value = got_body[key];
+      if (value) {
+        found_place[key] = value;
+      }
     });
     found_place.corrected = true;
     await found_place.save();
+
     // todo: make sure user is adding and editing the correct place
     let place_card = await getBody("place_card", found_place);
     let business_hours = await Hour.find({ place: place_card._id }).sort({
       created_at: -1,
     });
-    let onboard_business_hours = await getBody(
-      "public_business_hours",
-      business_hours
-    );
 
-    let output = await getPlaceApi({ _id: found_place._id });
+    let output = await getPlaceApi({ _id: found_place._doc });
+    console.log(output, "info");
 
     res.status(206).json(output);
   } catch (error) {
+    console.log(error, "testing_error");
     res.status(error.status || 400).json({ message: error.message });
   }
 });
@@ -324,7 +459,8 @@ router.post("/place/business_hours", [auth], async (req, res) => {
 
     let payload = {
       ...got_body,
-      place: current_place._id,
+      place: current_place.place,
+      business_profile: current_place._id,
       user: req.user.id,
     };
 

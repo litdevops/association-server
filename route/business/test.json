@@ -1,0 +1,93 @@
+{
+  "$__": {
+    "$options": {
+      "defaults": true,
+      "isNew": false,
+      "skipId": true,
+      "willInit": true
+    },
+    "$setCalled": {},
+    "_id": "64b99353f5f38d54ac76f11e",
+    "activePaths": {
+      "paths": {
+        "__v": "init",
+        "_id": "init",
+        "business_status": "init",
+        "created_at": "init",
+        "formatted_address": "init",
+        "icon": "init",
+        "international_phone_number": "init",
+        "name": "init",
+        "place_id": "init",
+        "point": "init",
+        "privacy": "init",
+        "public": "init",
+        "published": "init",
+        "refund_policy": "init",
+        "terms": "init",
+        "types": "init"
+      },
+      "stateNames": ["require", "modify", "init", "default", "ignore"],
+      "states": {
+        "default": {},
+        "ignore": {},
+        "init": {
+          "__v": true,
+          "_id": true,
+          "business_status": true,
+          "created_at": true,
+          "formatted_address": true,
+          "icon": true,
+          "international_phone_number": true,
+          "name": true,
+          "place_id": true,
+          "point": true,
+          "privacy": true,
+          "public": true,
+          "published": true,
+          "refund_policy": true,
+          "terms": true,
+          "types": true
+        },
+        "modify": {},
+        "require": {}
+      }
+    },
+    "cachedRequired": {},
+    "emitter": { "_events": {}, "_eventsCount": 2, "_maxListeners": 0 },
+    "getters": {},
+    "pathsToScopes": {},
+    "selected": {},
+    "session": null,
+    "strictMode": true,
+    "wasPopulated": false
+  },
+  "$init": true,
+  "$locals": {},
+  "$op": null,
+  "_doc": {
+    "__v": 0,
+    "_id": "64b99353f5f38d54ac76f11e",
+    "business_status": "OPERATIONAL",
+    "created_at": "2023-07-20T20:04:35.985Z",
+    "formatted_address": "Strada Teodor Mihali 58-60, Cluj-Napoca 400591, Romania",
+    "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/school-71.png",
+    "international_phone_number": "+40 264 418 652",
+    "name": "Faculty of Economics and Business Administration",
+    "place_id": "ChIJ-YqOoRUMSUcRoBLP7U19Ncw",
+    "point": {
+      "_id": "64b99353f5f38d54ac76f120",
+      "coordinates": [23.6213941, 46.7731747],
+      "type": "Point"
+    },
+    "privacy": [],
+    "public": true,
+    "published": false,
+    "refund_policy": [],
+    "terms": [],
+    "types": ["university", "point_of_interest", "establishment"]
+  },
+  "isNew": false,
+  "level": "info",
+  "timestamp": "2023-07-20T20:11:47.944Z"
+}

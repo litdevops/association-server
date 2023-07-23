@@ -12,6 +12,10 @@ const TheSchema = new Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: "Place",
     },
+    business_profile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BusinessProfile",
+    },
     status: {
       type: String,
       default: "accepted",
@@ -33,6 +37,10 @@ const TheSchema = new Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: "Place",
     },
+    business_profile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BusinessProfile",
+    },
     status: {
       type: String,
     },
@@ -42,6 +50,10 @@ const TheSchema = new Schema({
     public: {
       type: Boolean,
       default: true,
+    },
+    message: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Message",
     },
   },
 

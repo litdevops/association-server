@@ -11,6 +11,15 @@ const TheSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
+  profile: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Profile",
+  },
+  business_profile: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "BusinessProfile",
+  },
+
   place: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Place",
@@ -34,6 +43,7 @@ const TheSchema = new Schema({
     type: Boolean,
     default: false,
   },
+
   place_confirmed: {
     type: Boolean,
     default: false,

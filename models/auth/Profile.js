@@ -32,7 +32,7 @@ const TheSchema = new Schema({
   },
   current_place: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "place",
+    ref: "Place",
   },
 
   // authentications

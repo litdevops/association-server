@@ -3,12 +3,28 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const TheSchema = new Schema({
-  // ownership
+  // join relationship
   ip_address: String,
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+  sender: {
+    profile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Profile",
+    },
+    seen: {
+      type: Date,
+    },
   },
+  receiver: {
+    profile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Profile",
+    },
+
+    seen: {
+      type: Date,
+    },
+  },
+  // personal information
   place: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Place",
@@ -17,21 +33,8 @@ const TheSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "BusinessProfile",
   },
-  // data
-  title: String,
-  price: Number,
-  categories: [String],
-  invite_only: Boolean,
-  mission: String,
-  image: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "File",
-  },
-
-  // universal
   public: {
     type: Boolean,
-    default: false,
   },
   published: {
     type: Boolean,
@@ -46,4 +49,4 @@ const TheSchema = new Schema({
   },
 });
 
-module.exports = mongoose.model("Commitee", TheSchema);
+module.exports = mongoose.model("Contact", TheSchema);

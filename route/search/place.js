@@ -90,7 +90,6 @@ router.post("/place/select/:reason", [auth], async (req, res) => {
       // create place
       await model.save();
     }
-    console.log(model._doc, "testing_doc");
     // let return_body = await getBody("place_public",model);
     let return_body = await GetBusinessInfo(model._doc);
 

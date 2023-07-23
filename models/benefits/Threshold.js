@@ -13,7 +13,10 @@ const TheSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Place",
   },
-
+  business_profile: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "BusinessProfile",
+  },
   // data
   days: [String],
   time_start: String,

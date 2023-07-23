@@ -7,12 +7,15 @@ const BusinessEvent = require("../models/benefits/Event");
 const Job = require("../models/business/Job");
 const Manager = require("../models/business/manager");
 const Connection = require("../models/business/Connection");
+const BusinessProfile = require("../models/business/BusinessProfile");
+const { getDict } = require("../config/body");
 
 const getPlaceApi = async (obj) => {
   let output = {};
   try {
-    const { _id, public_key, private_key } = obj;
-    let place_query = {};
+    const { business_profile, public_key, private_key } = obj;
+    const _id = (business_profile && business_profile._id) || obj._id;
+    let business_profile_query = {};
     let place_populate = [
       { path: "logo", select: "link" },
       { path: "poster", select: "link" },
@@ -26,49 +29,78 @@ const getPlaceApi = async (obj) => {
       { path: "public_files", select: "link" },
       { path: "private_files", select: "link" },
     ];
-    let business_members_populate = [];
+    let business_members_populate = [
+      { path: "receiver.place", select: getDict("public_place") },
+      {
+        path: "receiver.business_profile",
+        select: getDict("public_business_profile"),
+        populate: getDict("business_branding"),
+      },
+      { path: "sender.place", select: getDict("public_place") },
+      {
+        path: "sender.business_profile",
+        select: getDict("public_business_profile"),
+        populate: getDict("business_branding"),
+      },
+    ];
 
-    let manager_populate = [];
+    let manager_populate = [
+      {
+        path: "profile",
+        select: getDict("public_profile"),
+      },
+    ];
 
     let hours_query = {};
     if (_id) {
-      place_query = { _id: _id };
+      business_profile_query = { _id: _id };
       place_populate = ["logo", "banner", "poster"];
     } else if (public_key && private_key) {
       let access = Access.find({
         public_key,
         private_key,
       });
-      place_query = { _id: access.place };
+      business_profile_query = { _id: access.place };
       hours_query.public = true;
     }
-    let place = await Place.findOne(place_query).populate(place_populate);
+    let found_business_profile = await BusinessProfile.findOne(
+      business_profile_query
+    ).populate(place_populate);
 
-    hours_query.place = place._id;
-    let hours = await Hour.find({ place: place._id }).sort({
+    hours_query.business_profile = found_business_profile._id;
+    let hours = await Hour.find({
+      business_profile: found_business_profile._id,
+    }).sort({
       created_at: -1,
     });
-    let packages = await Package.find({ place: place._id }).populate(
-      package_populate
-    );
-    let commitees = await Commitee.find({ place: place._id }).populate(
-      commitee_populate
-    );
-    let events = await BusinessEvent.find({ place: place._id }).populate(
-      event_populate
-    );
+    let packages = await Package.find({
+      business_profile: found_business_profile._id,
+    }).populate(package_populate);
+    let commitees = await Commitee.find({
+      business_profile: found_business_profile._id,
+    }).populate(commitee_populate);
+    let events = await BusinessEvent.find({
+      business_profile: found_business_profile._id,
+    }).populate(event_populate);
 
-    let jobs = await Job.find({ place: place._id }).populate(job_populate);
-    let employees = await Manager.find({ place: place._id }).populate(
-      manager_populate
-    );
+    let jobs = await Job.find({
+      business_profile: found_business_profile._id,
+    }).populate(job_populate);
+    let employees = await Manager.find({
+      business_profile: found_business_profile._id,
+    }).populate(manager_populate);
 
     let business_members = await Connection.find({
-      $or: [{ "sender.place": place._id }, { "receiver.place": place._id }],
+      $or: [
+        { "sender.business_profile": found_business_profile._id },
+        { "receiver.business_profile": found_business_profile._id },
+        { "receiver.place": found_business_profile.place },
+        { "sender.place": found_business_profile.place },
+      ],
     }).populate(business_members_populate);
 
     output = {
-      place,
+      place: found_business_profile,
       hours,
       packages,
       commitees,

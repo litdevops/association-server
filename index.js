@@ -1,3 +1,5 @@
+// make global changes
+// require("./utils/global");
 const cluster = require("cluster");
 const server = require("./server");
 
